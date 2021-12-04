@@ -3,6 +3,18 @@
 import numpy as np
 
 
+def findRating(diagArr, a, b):
+    # filter diagArr, selecting a if zero is the most common bit, b otherwise
+    for i in range(len(diagArr[0])):
+        zeroCount = str.join("", diagArr.T[i]).count("0")
+        oneCount = str.join("", diagArr.T[i]).count("1")
+        nextBit = a if zeroCount > oneCount else b
+        diagArr = diagArr[np.where(diagArr[:, i] == nextBit)]
+        if len(diagArr) == 1:
+            break
+    return int(str.join("", diagArr[0]), 2)
+
+
 with open("../input/03") as f:
     rawdata = [list(l.strip()) for l in f.readlines()]
 
@@ -19,22 +31,6 @@ epsilon = int(
 print(f"Part 1: {gamma * epsilon}")
 
 # Part 2
-oxArr = np.array(rawdata, dtype=str)
-for i in range(len(oxArr[0])):
-    zeroCount = str.join("", oxArr.T[i]).count("0")
-    oneCount = str.join("", oxArr.T[i]).count("1")
-    nextBit = "0" if zeroCount > oneCount else "1"
-    oxArr = oxArr[np.where(oxArr[:, i] == nextBit)]
-    if len(oxArr) == 1:
-        break
-oxygen = int(str.join("", oxArr[0]), 2)
-coArr = np.array(rawdata, dtype=str)
-for i in range(len(coArr[0])):
-    zeroCount = str.join("", coArr.T[i]).count("0")
-    oneCount = str.join("", coArr.T[i]).count("1")
-    nextBit = "0" if zeroCount <= oneCount else "1"
-    coArr = coArr[np.where(coArr[:, i] == nextBit)]
-    if len(coArr) == 1:
-        break
-co2 = int(str.join("", coArr[0]), 2)
+oxygen = findRating(np.array(rawdata, dtype=str), "0", "1")
+co2 = findRating(np.array(rawdata, dtype=str), "1", "0")
 print(f"Part 2: {oxygen * co2}")
