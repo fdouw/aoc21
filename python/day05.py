@@ -17,7 +17,7 @@ with open("../input/05") as f:
 straights = np.array(
     linedf[np.logical_or(linedf["x1"] == linedf["x2"], linedf["y1"] == linedf["y2"])]
 )
-vents = defaultdict(lambda: 0)
+vents = defaultdict(int)
 for x1, y1, x2, y2 in straights:
     # Using min and max here, because sometimes the coordinates are in reverse order
     if y1 == y2:

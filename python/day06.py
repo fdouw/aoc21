@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
-import numpy as np
-
 
 def fishcount(initial, days):
     """Returns the total number of fish after <days> days, starting with <initial> population."""
-    fishcounts = np.zeros((9), int)
-    for f in initial:
-        fishcounts[f] += 1
+    fishcounts = [0] * 9
+    for i in initial:
+        fishcounts[i] += 1
 
     for _ in range(days):
         resetcount = fishcounts[0]

@@ -7,7 +7,7 @@ fn fishcount(initial: &Vec<i32>, days: i32) -> i64 {
     for f in initial {
         fishcounts[*f as usize] += 1;
     }
-    for _d in 0..days {
+    for _ in 0..days {
         let spawncount = fishcounts[0];
         for i in 1usize..9 {
             fishcounts[i - 1] = fishcounts[i];
