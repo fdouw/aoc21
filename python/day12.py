@@ -11,14 +11,6 @@ def in_path(cave, path) -> bool:
     return path[0] == cave
 
 
-def in_path_2(cave, path):
-    while path[1] != None:
-        if path[0] == cave:
-            return True
-        path = path[1]
-    return path[0] == cave
-
-
 with open("../input/12") as f:
     rawdata = f.readlines()
     neighbours = {}
@@ -36,27 +28,27 @@ with open("../input/12") as f:
 # Part 1
 paths = SimpleQueue()
 paths.put(("start", None, False))
-complete_paths = []
+complete_paths = 0
 while not paths.empty():
     current_path = paths.get()
     if current_path[0] == "end":
-        complete_paths.append(current_path)
+        complete_paths += 1
     else:
         for nb in neighbours[current_path[0]]:
             if nb.isupper() or not in_path(nb, current_path):
                 # NB: Two neighbouring big caves would cause trouble...
                 paths.put((nb, current_path, False))
 
-print(f"Part 1: {len(complete_paths)}")
+print(f"Part 1: {complete_paths}")
 
 # Part 2
 paths = SimpleQueue()
 paths.put(("start", None, False))
-complete_paths = []
+complete_paths = 0
 while not paths.empty():
     current_path = paths.get()
     if current_path[0] == "end":
-        complete_paths.append(current_path)
+        complete_paths += 1
     else:
         for nb in neighbours[current_path[0]]:
             if nb.isupper():
@@ -66,4 +58,4 @@ while not paths.empty():
             elif nb != "start" and not current_path[-1]:
                 paths.put((nb, current_path, True))
 
-print(f"Part 2: {len(complete_paths)}")
+print(f"Part 2: {complete_paths}")
