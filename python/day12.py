@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 
-from queue import SimpleQueue
 
-
-def in_path(cave, path) -> bool:
-    while path[1] != None:
-        if path[0] == cave:
-            return True
-        path = path[1]
-    return path[0] == cave
+def count_paths(cave="start", visited={"start"}, allow_small_cave=False) -> int:
+    if cave == "end":
+        return 1
+    count = 0
+    for nb in neighbours[cave]:
+        if nb.isupper():
+            count += count_paths(nb, visited, allow_small_cave)
+        elif nb not in visited:
+            count += count_paths(nb, visited | {nb}, allow_small_cave)
+        elif allow_small_cave and nb != "start":
+            count += count_paths(nb, visited, False)
+    return count
 
 
 with open("../input/12") as f:
@@ -25,37 +29,6 @@ with open("../input/12") as f:
         else:
             neighbours[b].add(a)
 
-# Part 1
-paths = SimpleQueue()
-paths.put(("start", None, False))
-complete_paths = 0
-while not paths.empty():
-    current_path = paths.get()
-    if current_path[0] == "end":
-        complete_paths += 1
-    else:
-        for nb in neighbours[current_path[0]]:
-            if nb.isupper() or not in_path(nb, current_path):
-                # NB: Two neighbouring big caves would cause trouble...
-                paths.put((nb, current_path, False))
 
-print(f"Part 1: {complete_paths}")
-
-# Part 2
-paths = SimpleQueue()
-paths.put(("start", None, False))
-complete_paths = 0
-while not paths.empty():
-    current_path = paths.get()
-    if current_path[0] == "end":
-        complete_paths += 1
-    else:
-        for nb in neighbours[current_path[0]]:
-            if nb.isupper():
-                paths.put((nb, current_path, current_path[-1]))
-            elif not in_path(nb, current_path):
-                paths.put((nb, current_path, current_path[-1]))
-            elif nb != "start" and not current_path[-1]:
-                paths.put((nb, current_path, True))
-
-print(f"Part 2: {complete_paths}")
+print(f"Part 1 - dfs: {count_paths()}")
+print(f"Part 2 - dfs: {count_paths(allow_small_cave=True)}")
