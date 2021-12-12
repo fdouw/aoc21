@@ -3,6 +3,22 @@
 from queue import SimpleQueue
 
 
+def in_path(cave, path) -> bool:
+    while path[1] != None:
+        if path[0] == cave:
+            return True
+        path = path[1]
+    return path[0] == cave
+
+
+def in_path_2(cave, path):
+    while path[1] != None:
+        if path[0] == cave:
+            return True
+        path = path[1]
+    return path[0] == cave
+
+
 with open("../input/12") as f:
     rawdata = f.readlines()
     neighbours = {}
@@ -19,40 +35,35 @@ with open("../input/12") as f:
 
 # Part 1
 paths = SimpleQueue()
-paths.put(["start"])
+paths.put(("start", None, False))
 complete_paths = []
 while not paths.empty():
     current_path = paths.get()
-    if current_path[-1] == "end":
+    if current_path[0] == "end":
         complete_paths.append(current_path)
     else:
-        for nb in neighbours[current_path[-1]]:
-            if nb.isupper() or nb not in current_path:
+        for nb in neighbours[current_path[0]]:
+            if nb.isupper() or not in_path(nb, current_path):
                 # NB: Two neighbouring big caves would cause trouble...
-                paths.put(current_path.copy() + [nb])
+                paths.put((nb, current_path, False))
 
 print(f"Part 1: {len(complete_paths)}")
 
-# # Part 2
-# paths = SimpleQueue()
-# paths.put(["start"])
-# complete_paths = []
-# while not paths.empty():
-#     current_path = paths.get()
-#     if current_path[-1] == "end":
-#         complete_paths.append(current_path)
-#     else:
-#         for nb in neighbours[current_path[-1]]:
-#             if nb.isupper() or nb not in current_path:
-#                 # NB: Two neighbouring big caves would cause trouble...
-#                 paths.put(current_path.copy() + [nb])
-#             elif nb.islower() and nb in current_path:
-#                 for i in range(len(current_path)):
-#                     if current_path[i] != nb and current_path[i].islower():
-#                         if current_path[i] in current_path[:i]:
-#                             # Duplicate lower case, distinct from nb
-#                             break
-#                 else:
-#                     paths.put(current_path.copy() + [nb])
+# Part 2
+paths = SimpleQueue()
+paths.put(("start", None, False))
+complete_paths = []
+while not paths.empty():
+    current_path = paths.get()
+    if current_path[0] == "end":
+        complete_paths.append(current_path)
+    else:
+        for nb in neighbours[current_path[0]]:
+            if nb.isupper():
+                paths.put((nb, current_path, current_path[-1]))
+            elif not in_path(nb, current_path):
+                paths.put((nb, current_path, current_path[-1]))
+            elif nb != "start" and not current_path[-1]:
+                paths.put((nb, current_path, True))
 
-# print(f"Part 2: {len(complete_paths)}")
+print(f"Part 2: {len(complete_paths)}")
