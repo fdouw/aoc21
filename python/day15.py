@@ -1,30 +1,30 @@
 #!/usr/bin/env python
 
+from queue import PriorityQueue
+
 
 def get_distance(cave):
-    deltas = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    deltas = ((-1, 0), (1, 0), (0, -1), (0, 1))
     width = len(cave[0])
     height = len(cave)
     distances = [[100_000_000] * width for _ in range(height)]
-    next_search = {(0, 1), (1, 0)}
+    next_search = PriorityQueue()
+    next_search.put((0, (0, 0)))
 
     # Don't count the starting position, as we never enter it
     distances[0][0] = 0
-    while len(next_search) > 0:
-        current_search = next_search
-        next_search = set()
-        for x, y in current_search:
-            updated = False
-            for dx, dy in deltas:
-                if 0 <= x + dx < width and 0 <= y + dy < height:
-                    if distances[y + dy][x + dx] + cave[y][x] < distances[y][x]:
-                        distances[y][x] = distances[y + dy][x + dx] + cave[y][x]
-                        updated = True
-            if updated:
-                for dx, dy in deltas:
-                    if 0 <= x + dx < width and 0 <= y + dy < height:
-                        next_search.add((x + dx, y + dy))
-    return distances[-1][-1]
+    while not next_search.empty():
+        dist, pos = next_search.get()
+        x, y = pos
+        if pos == (width - 1, height - 1):
+            return dist
+        for dx, dy in deltas:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                if cave[ny][nx] + dist < distances[ny][nx]:
+                    distances[ny][nx] = dist + cave[ny][nx]
+                    next_search.put((distances[ny][nx], (nx, ny)))
+    return -1
 
 
 with open("../input/15") as f:
