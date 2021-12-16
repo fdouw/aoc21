@@ -15,32 +15,20 @@ OPERATOR_TYPE_LT = 6
 OPERATOR_TYPE_EQ = 7
 
 
-class LiteralPacket:
-    def __init__(self, version, type_id, number):
+class Packet:
+    def __init__(self, version, type_id, number=0):
         self.version = version
         self.type_id = type_id
         self.number = number
-
-    def get_value(self):
-        return self.number
-
-    def get_version_sum(self):
-        return self.version
-
-
-class OperatorPacket:
-    def __init__(self, version, type_id, length_type, length):
-        self.version = version
-        self.type_id = type_id
-        self.length_type = length_type
-        self.length = length
         self.subpackets = []
 
     def add_subpacket(self, packet):
         self.subpackets.append(packet)
 
     def get_value(self):
-        if self.type_id == OPERATOR_TYPE_SUM:
+        if self.type_id == PACKET_TYPE_LITERAL_VALUE:
+            return self.number
+        elif self.type_id == OPERATOR_TYPE_SUM:
             return sum(p.get_value() for p in self.subpackets)
         elif self.type_id == OPERATOR_TYPE_PROD:
             return prod(p.get_value() for p in self.subpackets)
@@ -51,45 +39,31 @@ class OperatorPacket:
         elif self.type_id == OPERATOR_TYPE_GT:
             if len(self.subpackets) != 2:
                 raise AssertionError("Operator '>' needs exactly two subpackets")
-            return (
-                1
-                if self.subpackets[0].get_value() > self.subpackets[1].get_value()
-                else 0
-            )
+            return int(self.subpackets[0].get_value() > self.subpackets[1].get_value())
         elif self.type_id == OPERATOR_TYPE_LT:
             if len(self.subpackets) != 2:
                 raise AssertionError("Operator '<' needs exactly two subpackets")
-            return (
-                1
-                if self.subpackets[0].get_value() < self.subpackets[1].get_value()
-                else 0
-            )
+            return int(self.subpackets[0].get_value() < self.subpackets[1].get_value())
         elif self.type_id == OPERATOR_TYPE_EQ:
             if len(self.subpackets) != 2:
                 raise AssertionError("Operator '==' needs exactly two subpackets")
-            return (
-                1
-                if self.subpackets[0].get_value() == self.subpackets[1].get_value()
-                else 0
-            )
+            return int(self.subpackets[0].get_value() == self.subpackets[1].get_value())
 
     def get_version_sum(self):
         return self.version + sum(p.get_version_sum() for p in self.subpackets)
 
 
+def read_bits(data, start, length):
+    return int(data[start : start + length], 2), start + length
+
+
 def read_packet(data, pointer):
     """
-    Reads a single packet from data, starting at pointer. Includes subpackets.
+    Reads a single packet from data, starting at pointer. Includes subpackets and assumes the data is correct.
     Returns the subtree and the new pointer.
     """
-    if data.find("1", pointer) == -1:
-        # print(f"Reached padding at the end ({len(data)-pointer} bits remaining)")
-        return None, pointer
-
-    packet_start = pointer
-    version = int(data[pointer : pointer + 3], 2)
-    type_id = int(data[pointer + 3 : pointer + 6], 2)
-    pointer += 6
+    version, pointer = read_bits(data, pointer, 3)
+    type_id, pointer = read_bits(data, pointer, 3)
 
     if type_id == PACKET_TYPE_LITERAL_VALUE:
         number_bits = ""
@@ -99,34 +73,21 @@ def read_packet(data, pointer):
             number_bits += data[pointer + 1 : pointer + 5]
             pointer += 5
         number = int(number_bits, 2)
-        # print(
-        #     f"Read packet: LITERAL({packet_start}):  [{version}, {type_id}, {number}]"
-        # )
-        return LiteralPacket(version, type_id, number), pointer
+        return Packet(version, type_id, number), pointer
     else:
-        length_type_id = int(data[pointer])
-        pointer += 1
+        length_type_id, pointer = read_bits(data, pointer, 1)
         length_size = 15 if length_type_id == LENGTH_TYPE_BITS else 11
-        length = int(data[pointer : pointer + length_size], 2)
-        pointer += length_size
-        packet = OperatorPacket(version, type_id, length_type_id, length)
+        length, pointer = read_bits(data, pointer, length_size)
+        packet = Packet(version, type_id)
         if length_type_id == LENGTH_TYPE_PACKETS:
-            # print(f"DEBUG: reading {length} packets")
             for _ in range(length):
                 subpacket, pointer = read_packet(data, pointer)
                 packet.add_subpacket(subpacket)
         else:  # LENGTH_TYPE_BITS
-            # print(f"DEBUG: reading {length} bits")
-            to_read = length
-            while to_read > 0:
-                # print(f"..{to_read:3} bits left to read")
-                subpacket, new_pointer = read_packet(data, pointer)
+            pointer_target = pointer + length
+            while pointer < pointer_target:
+                subpacket, pointer = read_packet(data, pointer)
                 packet.add_subpacket(subpacket)
-                to_read -= new_pointer - pointer
-                pointer = new_pointer
-        # print(
-        #     f"Read packet: OPERATOR({packet_start}): [{version}, {type_id}, {length_type_id}, {length}]"
-        # )
         return packet, pointer
 
 
