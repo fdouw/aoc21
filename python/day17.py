@@ -8,35 +8,33 @@ miny, maxy = -86, -59
 # miny, maxy = -10, -5
 
 # Compute bounderies for initial x-velocity
-a = 0  # int(sqrt(2 * minx) - 1)
+a = 0
 b = maxx + 1
 
 x_positions = []
-for initx in range(a, b):
+for initx in range(0, b):
     x = 0
     x_positions.append([0] + [x := x + dx for dx in range(initx, 0, -1)])
 
 highest = -1
 velocities = set()
-for inity in range(miny, 2_000):
+for inity in range(miny, -miny):
     posy = 0
     dy = inity
     topy = 0
     n = 0
-    while True:
-        posy += dy
-        if dy > 0:
-            topy += dy
-        dy -= 1
-        n += 1
-        if posy < miny:
-            break
+    while posy >= miny:
         if posy <= maxy:
             for initx in range(a, b):
                 step = min(n, len(x_positions[initx]) - 1)
                 if minx <= x_positions[initx][step] <= maxx:
                     highest = max(highest, topy)
                     velocities.add((initx, inity))
+        posy += dy
+        if dy == 0:
+            topy = posy
+        dy -= 1
+        n += 1
 
 print(f"Part 1: {highest}")
 print(f"Part 2: {len(velocities)}")
